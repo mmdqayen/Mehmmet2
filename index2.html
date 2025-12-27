@@ -1,0 +1,230 @@
+
+<!doctype html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>MEHMMET — Matrix (Copperplate)</title>
+
+  <!-- فونت شبیه Copperplate (Cinzel) از گوگل -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#020305;
+
+      --green:#00ff66;   /* رنگ اسم */
+      --purple:#b14cff;  /* تم بنفش */
+
+      --card: rgba(2, 8, 10, .55);
+      --border: rgba(177, 76, 255, .28);
+      --glow: 0 0 12px rgba(0,255,102,.55), 0 0 40px rgba(177,76,255,.22);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      background:
+        radial-gradient(1200px 700px at 50% 30%, rgba(177,76,255,.12), transparent 60%),
+        radial-gradient(900px 600px at 40% 55%, rgba(0,0,0,.55), transparent 55%),
+        var(--bg);
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    canvas{
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      z-index:0;
+    }
+
+    .card{
+      position:relative;
+      z-index:1;
+      padding:48px 64px;
+      border:1px solid var(--border);
+      border-radius:18px;
+      background: var(--card);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 14px 50px rgba(0,0,0,.65);
+      text-align:center;
+    }
+
+    /* اسم با استایل Copperplate تر */
+    .name{
+      margin:0;
+      font-size:78px;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: var(--green);
+      text-shadow: var(--glow);
+
+      /* اول Cinzel (خیلی نزدیک به حس Copperplate)، بعد خود Copperplate اگر سیستم داشت */
+      font-family: "Cinzel", "Copperplate", "Copperplate Gothic Light", "Copperplate Gothic", serif;
+      font-weight: 800;
+    }
+
+    .sub{
+      margin-top:12px;
+      font: 600 14px/1.6 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      color: rgba(210, 185, 255, .92);
+      text-shadow: 0 0 10px rgba(177,76,255,.22);
+    }
+
+    .scan{
+      position:absolute;
+      left:0; right:0;
+      top:-40%;
+      height:140px;
+      background: linear-gradient(to bottom,
+        transparent,
+        rgba(0,0,0,.18),
+        rgba(177,76,255,.14),
+        transparent
+      );
+      border-radius:18px;
+      pointer-events:none;
+      filter: blur(.2px);
+      animation: scan 2.8s ease-in-out infinite;
+    }
+    @keyframes scan{
+      0%   { transform: translateY(0); opacity:0; }
+      15%  { opacity:1; }
+      50%  { transform: translateY(260%); opacity:1; }
+      100% { transform: translateY(560%); opacity:0; }
+    }
+
+    .vignette{
+      position:fixed;
+      inset:0;
+      z-index:1;
+      pointer-events:none;
+      background: radial-gradient(closest-side at 50% 45%, transparent 60%, rgba(0,0,0,.70) 100%);
+      mix-blend-mode:multiply;
+      opacity:.95;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrix" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <main class="card">
+    <div class="scan"></div>
+    <h1 class="name">MEHMMET</h1>
+    <div class="sub">01001101 01000101 01001000 01001101 01001101 01000101 01010100</div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
+
+    const chars = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789";
+    let fontSize = 18;
+    let columns = 0;
+    let drops = [];
+
+    const headBright = "rgba(245, 240, 255, 0.95)";
+    const purpleBody = "rgba(177, 76, 255, 0.70)";
+    const blackBody  = "rgba(0, 0, 0, 0.70)";
+
+function setSize(){
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width  = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      columns = Math.floor(window.innerWidth / fontSize);
+      drops = Array.from({length: columns}, () =>
+        Math.floor(Math.random() * (window.innerHeight / fontSize))
+      );
+
+      ctx.font = 700 ${fontSize}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    function draw(){
+      ctx.fillStyle = "rgba(0, 0, 0, 0.10)";
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+      for (let i = 0; i < drops.length; i++){
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+
+        ctx.fillStyle = headBright;
+        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x, y);
+
+        ctx.fillStyle = purpleBody;
+        if (Math.random() > 0.20) {
+          ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x, y - fontSize);
+        }
+
+        ctx.fillStyle = blackBody;
+        if (Math.random() > 0.55) {
+          ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x, y - 2 * fontSize);
+        }
+        if (Math.random() > 0.75) {
+          ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x, y - 3 * fontSize);
+        }
+
+        if (y > window.innerHeight && Math.random() > 0.975){
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    setSize();
+    window.addEventListener("resize", setSize);
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>
+
+.name{
+  margin:0;
+  font-size:78px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--green);
+
+  /* درخشش بیشتر */
+  text-shadow:
+    0 0 6px rgba(0,255,102,.65),
+    0 0 16px rgba(0,255,102,.45),
+    0 0 34px rgba(0,255,102,.28),
+    0 0 60px rgba(177,76,255,.18);
+
+  font-family: "Cinzel", "Copperplate", "Copperplate Gothic Light", "Copperplate Gothic", serif;
+  font-weight: 800;
+}
+
+.name{ animation: glow 2.2s ease-in-out infinite; }
+
+@keyframes glow{
+  0%,100%{
+    filter: brightness(1);
+    text-shadow:
+      0 0 6px rgba(0,255,102,.60),
+      0 0 16px rgba(0,255,102,.40),
+      0 0 34px rgba(0,255,102,.25),
+      0 0 60px rgba(177,76,255,.16);
+  }
+  50%{
+    filter: brightness(1.15);
+    text-shadow:
+      0 0 10px rgba(0,255,102,.85),
+      0 0 26px rgba(0,255,102,.55),
+      0 0 52px rgba(0,255,102,.35),
+      0 0 80px rgba(177,76,255,.22);
+  }
+}
